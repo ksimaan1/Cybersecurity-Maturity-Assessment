@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>{{ 'Edit Label' if label.id else 'Add New Label' }}</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="key">Key:</label>
+                            <input type="text" class="form-control" id="key" name="key" value="{{ label.key }}" required {% if label.id %}readonly{% endif %}>
+                            <small class="form-text text-muted">Unique identifier used in templates (not editable after creation)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="section">Section:</label>
+                            <input type="text" class="form-control" id="section" name="section" value="{{ label.section }}" required>
+                            <small class="form-text text-muted">Group category (e.g., common, auth, bank, supervisor)</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion" id="languageAccordion">
+                    <!-- English & Spanish (always expanded) -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingPrimary">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePrimary" aria-expanded="true" aria-controls="collapsePrimary">
+                                English & Spanish
+                            </button>
+                        </h2>
+                        <div id="collapsePrimary" class="accordion-collapse collapse show" aria-labelledby="headingPrimary">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="en">English (en):</label>
+                                            <textarea class="form-control" id="en" name="en" rows="3" required>{{ label.en }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="es">Spanish (es):</label>
+                                            <textarea class="form-control" id="es" name="es" rows="3">{{ label.es }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Middle Eastern Languages -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingMiddleEast">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMiddleEast" aria-expanded="false" aria-controls="collapseMiddleEast">
+                                Arabic & Farsi
+                            </button>
+                        </h2>
+                        <div id="collapseMiddleEast" class="accordion-collapse collapse" aria-labelledby="headingMiddleEast">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="ar">Arabic (ar):</label>
+                                            <textarea class="form-control" id="ar" name="ar" rows="3" dir="rtl">{{ label.ar }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="fa">Farsi (fa):</label>
+                                            <textarea class="form-control" id="fa" name="fa" rows="3" dir="rtl">{{ label.fa }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Central Asian Languages -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingCentralAsia">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCentralAsia" aria-expanded="false" aria-controls="collapseCentralAsia">
+                                Russian, Tajik, Kazakh & Azerbaijani
+                            </button>
+                        </h2>
+                        <div id="collapseCentralAsia" class="accordion-collapse collapse" aria-labelledby="headingCentralAsia">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="ru">Russian (ru):</label>
+                                            <textarea class="form-control" id="ru" name="ru" rows="3">{{ label.ru }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="tg">Tajik (tg):</label>
+                                            <textarea class="form-control" id="tg" name="tg" rows="3">{{ label.tg }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="kk">Kazakh (kk):</label>
+                                            <textarea class="form-control" id="kk" name="kk" rows="3">{{ label.kk }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="az">Azerbaijani (az):</label>
+                                            <textarea class="form-control" id="az" name="az" rows="3">{{ label.az }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Other Languages -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOther">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOther" aria-expanded="false" aria-controls="collapseOther">
+                                Chinese & French
+                            </button>
+                        </h2>
+                        <div id="collapseOther" class="accordion-collapse collapse" aria-labelledby="headingOther">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="zh">Chinese (zh):</label>
+                                            <textarea class="form-control" id="zh" name="zh" rows="3">{{ label.zh }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="fr">French (fr):</label>
+                                            <textarea class="form-control" id="fr" name="fr" rows="3">{{ label.fr }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="{{ url_for('admin_labels') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

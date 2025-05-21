@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">{{ get_label('app_title', 'Cybersecurity Maturity Assessment') }}</h1>
+        <p class="col-md-8 fs-4">{{ get_label('welcome_msg', 'Welcome to the Cybersecurity Controls Framework application.') }}</p>
+        <p>{{ get_label('app_description', 'This platform helps financial institutions evaluate and monitor cybersecurity maturity using a structured, control-based framework.') }}</p>
+        <a class="btn btn-primary btn-lg" href="{{ url_for('about') }}">{{ get_label('learn_more', 'Learn more') }}</a>
+    </div>
+</div>
+{% endblock %}

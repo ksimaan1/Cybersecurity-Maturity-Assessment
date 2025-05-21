@@ -1,0 +1,61 @@
+/* Custom styles */
+body {
+    padding-bottom: 70px; /* Allow space for fixed footer */
+}
+
+.jumbotron {
+    background-color: #f8f9fa;
+    padding: 2rem 1rem;
+    margin-bottom: 2rem;
+    border-radius: 0.3rem;
+}
+
+/* RTL support */
+[dir="rtl"] {
+    text-align: right;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* For admin labels editing */
+.accordion-button::after {
+    margin-left: 0;
+}
+
+/* Increase textarea height for translations */
+textarea.form-control {
+    min-height: 80px;
+}
+
+/* Card styling */
+.card {
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    background-color: rgba(0,0,0,.03);
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+/* Table improvements */
+.table th {
+    background-color: #f8f9fa;
+}
+
+/* Form styling */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* Language selector styling */
+.language-select {
+    min-width: 150px;
+}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Import Labels from CSV</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="file" class="form-label">CSV File:</label>
+                    <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+                    <small class="form-text text-muted">
+                        The CSV file must have the following columns: key, section, en, es, ar, ru, zh, tg, fa, kk, az, fr
+                    </small>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="update_existing" name="update_existing" value="1" checked>
+                    <label class="form-check-label" for="update_existing">
+                        Update existing labels
+                    </label>
+                </div>
+                
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary">Upload and Import</button>
+                    <a href="{{ url_for('admin_labels') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        <h3>CSV Format Example</h3>
+        <pre class="bg-light p-3">
+key,section,en,es,ar,ru,zh,tg,fa,kk,az,fr
+app_title,common,Cybersecurity Maturity Assessment,Evaluación de Madurez en Ciberseguridad,تقييم نضج الأمن السيبراني,Оценка зрелости кибербезопасности,网络安全成熟度评估,Арзёбии балоғати амнияти киберӣ,ارزیابی بلوغ امنیت سایبری,Киберқауіпсіздік жетілуін бағалау,Kibertəhlükəsizlik Yetkinliyinin Qiymətləndirilməsi,Évaluation de la Maturité de la Cybersécurité
+login,common,Login,Iniciar sesión,تسجيل الدخول,Войти,登录,Воридшавӣ,ورود,Кіру,Giriş,Connexion</pre>
+    </div>
+</div>
+{% endblock %}

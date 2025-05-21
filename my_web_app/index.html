@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jumbotron bg-light p-5 rounded">
+    <h1 class="display-4">Cybersecurity Maturity Assessment</h1>
+    <p class="lead">Welcome to the Cybersecurity Controls Framework application.</p>
+    <hr class="my-4">
+    <p>This platform helps financial institutions evaluate and monitor cybersecurity maturity using a structured, control-based framework.</p>
+    <p class="lead">
+        <a class="btn btn-primary btn-lg" href="{{ url_for('about') }}" role="button">Learn more</a>
+    </p>
+</div>
+{% endblock %}
