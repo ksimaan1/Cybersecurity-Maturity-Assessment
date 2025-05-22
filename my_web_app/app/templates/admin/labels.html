@@ -1,126 +1,71 @@
 {% extends "base.html" %}
 
+{% block title %}{{ get_label('admin_labels') }}{% endblock %}
+
 {% block content %}
 <div class="container">
-    <h2>{{ get_label('label_management', 'Label Management') }}</h2>
-    
-    <div class="mb-3">
-        <a href="{{ url_for('export_labels') }}" class="btn btn-success">
-            <i class="fas fa-file-export"></i> Export to CSV
-        </a>
-        <a href="{{ url_for('import_labels') }}" class="btn btn-primary">
-            <i class="fas fa-file-import"></i> Import from CSV
-        </a>
-        <a href="{{ url_for('add_label') }}" class="btn btn-info">
-            <i class="fas fa-plus"></i> Add New Label
-        </a>
-    </div>
-    
-    <div class="card mb-4">
-        <div class="card-header">
-            <div class="row">
-                <div class="col-md-6">
-                    <h4>Filter Labels</h4>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">{{ get_label('admin_labels') }}</h3>
+                    <a href="{{ url_for('admin_add_label') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> {{ get_label('add_new_label') }}
+                    </a>
                 </div>
-                <div class="col-md-6 text-end">
-                    <span>Total: {{ labels|length }} labels</span>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            <form method="GET" action="{{ url_for('admin_labels') }}">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="section">Section:</label>
-                            <select class="form-control" id="section" name="section">
-                                <option value="">All Sections</option>
-                                {% for section in sections %}
-                                    <option value="{{ section }}" {% if section == selected_section %}selected{% endif %}>{{ section }}</option>
+                <div class="card-body">
+                    {% if labels %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ get_label('key') }}</th>
+                                    <th>{{ get_label('english') }}</th>
+                                    <th>{{ get_label('arabic') }}</th>
+                                    <th>{{ get_label('actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for label in labels %}
+                                <tr>
+                                    <td><code>{{ label.key }}</code></td>
+                                    <td>{{ label.en[:50] }}{% if label.en and label.en|length > 50 %}...{% endif %}</td>
+                                    <td>{{ label.ar[:50] if label.ar }}{% if label.ar and label.ar|length > 50 %}...{% endif %}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('admin_edit_label', id=label.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="{{ get_label('edit') }}">
+                                                <i class="fas fa-edit"></i> {{ get_label('edit') }}
+                                            </a>
+                                            <form method="POST" 
+                                                  action="{{ url_for('admin_delete_label', id=label.id) }}" 
+                                                  class="d-inline" 
+                                                  onsubmit="return confirm('{{ get_label('confirm_delete') }}');">
+                                                <button type="submit" 
+                                                        class="btn btn-sm btn-outline-danger" 
+                                                        title="{{ get_label('delete') }}">
+                                                    <i class="fas fa-trash"></i> {{ get_label('delete') }}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
                                 {% endfor %}
-                            </select>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="search">Search Key or Text:</label>
-                            <input type="text" class="form-control" id="search" name="search" value="{{ search_term }}">
-                        </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-3">{{ get_label('no_labels_found') }}</p>
+                        <a href="{{ url_for('admin_add_label') }}" class="btn btn-primary">
+                            {{ get_label('add_first_label') }}
+                        </a>
                     </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button type="submit" class="btn btn-primary form-control">Filter</button>
-                        </div>
-                    </div>
+                    {% endif %}
                 </div>
-            </form>
-        </div>
-    </div>
-    
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Key</th>
-                    <th>Section</th>
-                    <th>English</th>
-                    <th>Spanish</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for label in labels %}
-                    <tr>
-                        <td>{{ label.id }}</td>
-                        <td>{{ label.key }}</td>
-                        <td>{{ label.section }}</td>
-                        <td>{{ label.en }}</td>
-                        <td>{{ label.es }}</td>
-                        <td>
-                            <a href="{{ url_for('edit_label', label_id=label.id) }}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ label.id }}, '{{ label.key }}')">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="deleteModalBody">
-                Are you sure you want to delete this label?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a href="#" id="confirmDeleteButton" class="btn btn-danger">Delete</a>
             </div>
         </div>
     </div>
 </div>
-
-{% block extra_js %}
-<script>
-    function confirmDelete(id, key) {
-        document.getElementById('deleteModalBody').innerHTML = 
-            'Are you sure you want to delete the label with key <strong>' + key + '</strong>?';
-        document.getElementById('confirmDeleteButton').href = "{{ url_for('delete_label', label_id=0) }}".replace('0', id);
-        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        deleteModal.show();
-    }
-</script>
-{% endblock %}
 {% endblock %}

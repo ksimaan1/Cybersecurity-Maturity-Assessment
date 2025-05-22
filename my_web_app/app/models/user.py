@@ -15,6 +15,16 @@ class EmploymentStatus:
     ON_LEAVE = 2
     TERMINATED = 3
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), index=True, unique=True)
+    email = db.Column(db.String(120), index=True, unique=True)
+    password_hash = db.Column(db.String(128))
+    first_name = db.Column(db.String(64))
+    last_name = db.Column(db.String(64))
+    role = db.Column(db.String(20))
+    language = db.Column(db.String(10), default='en')  # Default to English
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     

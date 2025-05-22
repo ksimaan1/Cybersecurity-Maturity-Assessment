@@ -1,12 +1,92 @@
 {% extends "base.html" %}
 
+{% block title %}{{ get_label('dashboard') }} - {{ get_label('app_title') }}{% endblock %}
+
 {% block content %}
-<div class="p-5 mb-4 bg-light rounded-3">
-    <div class="container-fluid py-5">
-        <h1 class="display-5 fw-bold">{{ get_label('app_title', 'Cybersecurity Maturity Assessment') }}</h1>
-        <p class="col-md-8 fs-4">{{ get_label('welcome_msg', 'Welcome to the Cybersecurity Controls Framework application.') }}</p>
-        <p>{{ get_label('app_description', 'This platform helps financial institutions evaluate and monitor cybersecurity maturity using a structured, control-based framework.') }}</p>
-        <a class="btn btn-primary btn-lg" href="{{ url_for('about') }}">{{ get_label('learn_more', 'Learn more') }}</a>
+<div class="row">
+    <div class="col-md-12">
+        <div class="jumbotron">
+            <h1 class="display-4">{{ get_label('welcome') }}, {{ user.first_name }}!</h1>
+            <p class="lead">{{ get_label('dashboard_description') }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-chart-line"></i> {{ get_label('overview') }}</h4>
+            </div>
+            <div class="card-body">
+                <p>{{ get_label('main_content_placeholder') }}</p>
+                
+                <!-- Placeholder for main application content -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                                <h5>{{ get_label('security_controls') }}</h5>
+                                <p class="text-muted">{{ get_label('manage_security_controls') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-bar fa-3x text-success mb-3"></i>
+                                <h5>{{ get_label('assessments') }}</h5>
+                                <p class="text-muted">{{ get_label('view_assessments') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> {{ get_label('quick_info') }}</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>{{ get_label('user') }}:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                <p><strong>{{ get_label('role') }}:</strong> {{ user.role|title }}</p>
+                <p><strong>{{ get_label('language') }}:</strong> 
+                    {% set current_lang = get_current_language() %}
+                    {% if current_lang == 'en' %}English
+                    {% elif current_lang == 'ar' %}العربية
+                    {% elif current_lang == 'ru' %}Русский
+                    {% elif current_lang == 'zh' %}中文
+                    {% elif current_lang == 'es' %}Español
+                    {% elif current_lang == 'tg' %}Тоҷикӣ
+                    {% elif current_lang == 'fa' %}فارسی
+                    {% elif current_lang == 'kk' %}Қазақша
+                    {% elif current_lang == 'az' %}Azərbaycan
+                    {% else %}English
+                    {% endif %}
+                </p>
+                
+                {% if user.role == 'admin' %}
+                <hr>
+                <h6>{{ get_label('admin_tools') }}</h6>
+                <a href="{{ url_for('admin_labels') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-tags"></i> {{ get_label('manage_labels') }}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6><i class="fas fa-language"></i> {{ get_label('language_info') }}</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted">{{ get_label('language_change_info') }}</p>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
