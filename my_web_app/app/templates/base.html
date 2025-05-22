@@ -1,133 +1,98 @@
 <!DOCTYPE html>
-<html lang="{{ get_current_language() }}" {% if get_current_language() in ['ar', 'fa'] %}dir="rtl"{% endif %}>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>
-        {% block title %}{{ get_label('app_title') }}{% endblock %}
-    </title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title or 'Cybersecurity Maturity Assessment' }}{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     
-    {% block head %}{% endblock %}
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-shield-alt"></i> {{ get_label('app_title') }}
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    {% if get_user() %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('index') }}">
-                                <i class="fas fa-home"></i> {{ get_label('dashboard') }}
-                            </a>
-                        </li>
-                        {% if get_user().role == 'admin' %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-cog"></i> {{ get_label('admin') }}
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ url_for('admin_labels') }}">
-                                    <i class="fas fa-tags"></i> {{ get_label('manage_labels') }}
-                                </a></li>
-                            </ul>
-                        </li>
-                        {% endif %}
-                    {% endif %}
-                </ul>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="{{ url_for('index') }}">
+                    Cybersecurity Maturity Assessment
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
                 
-                <ul class="navbar-nav">
-                    <!-- Language Selector -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-globe"></i>
-                            {% set current_lang = get_current_language() %}
-                            {% if current_lang == 'en' %}🇺🇸 English
-                            {% elif current_lang == 'ar' %}🇸🇦 العربية
-                            {% elif current_lang == 'ru' %}🇷🇺 Русский
-                            {% elif current_lang == 'zh' %}🇨🇳 中文
-                            {% elif current_lang == 'es' %}🇪🇸 Español
-                            {% elif current_lang == 'tg' %}🇹🇯 Тоҷикӣ
-                            {% elif current_lang == 'fa' %}🇮🇷 فارسی
-                            {% elif current_lang == 'kk' %}🇰🇿 Қазақша
-                            {% elif current_lang == 'az' %}🇦🇿 Azərbaycan
-                            {% else %}🇺🇸 English
-                            {% endif %}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('set_language', language='en') }}">🇺🇸 English</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('set_language', language='ar') }}">🇸🇦 العربية</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('set_language', language='ru') }}">🇷🇺 Русский</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('set_language', language='zh') }}">🇨🇳 中文</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('set_language', language='es') }}">🇪🇸 Español</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('set_language', language='tg') }}">🇹🇯 Тоҷикӣ</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('set_language', language='fa') }}">🇮🇷 فارسی</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('set_language', language='kk') }}">🇰🇿 Қазақша</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('set_language', language='az') }}">🇦🇿 Azərbaycan</a></li>
-                        </ul>
-                    </li>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Left side menu items -->
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('about') }}">About</a>
+                        </li>
+                    </ul>
                     
-                    {% if get_user() %}
-                    <!-- User Menu -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user"></i> {{ get_user().first_name }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
-                                <i class="fas fa-sign-out-alt"></i> {{ get_label('logout') }}
-                            </a></li>
-                        </ul>
-                    </li>
-                    {% endif %}
-                </ul>
+                    <!-- Right side menu items - Login/Account -->
+                    <ul class="navbar-nav">
+                        {% if session.get('user_id') %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user"></i> Account
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li><a class="dropdown-item" href="#">Profile</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('login') }}">
+                                    <i class="fas fa-sign-in-alt"></i> Login
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
-
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="container mt-3">
+        </nav>
+    </header>
+    
+    <main class="container mt-4 mb-5">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
-            </div>
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Page Title -->
+        {% if title %}
+            <h1 class="mb-4">{{ title }}</h1>
         {% endif %}
-    {% endwith %}
-
-    <!-- Main Content -->
-    <main class="container mt-4">
+        
+        <!-- Main Content -->
         {% block content %}{% endblock %}
     </main>
-
-    <!-- Footer -->
-    <footer class="bg-light text-center text-muted py-3 mt-5">
-        <div class="container">
-            <small>&copy; 2025 {{ get_label('app_title') }}. {{ get_label('all_rights_reserved') }}</small>
+    
+    <footer class="py-3 bg-light mt-auto">
+        <div class="container text-center">
+            <span class="text-muted">
+                &copy; 2025 Cybersecurity Maturity Assessment
+            </span>
         </div>
     </footer>
-
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    {% block scripts %}{% endblock %}
 </body>
 </html>

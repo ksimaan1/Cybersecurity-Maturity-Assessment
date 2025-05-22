@@ -1,135 +1,69 @@
-from flask import Flask, render_template, redirect, url_for, session, request, jsonify, flash
+from flask import Flask, render_template, redirect, url_for, flash, request, session, g
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import inspect, text
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
-# Initialize Flask app
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+# Create basic Flask app with explicit template folder
+app = Flask(__name__, 
+            template_folder=os.path.abspath('app/templates'),
+            static_folder=os.path.abspath('app/static'))
+
+# Configure app
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SECRET_KEY'] = 'dev-key-replace-in-production'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'app.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize database
 db = SQLAlchemy(app)
 
-# Import models after db initialization
-try:
-    from app.models import User, Label
-except ImportError:
-    # If app.models doesn't exist, define models here
-    class User(db.Model):
-        __tablename__ = 'user'
-        
-        id = db.Column(db.Integer, primary_key=True)
-        username = db.Column(db.String(64), index=True, unique=True)
-        email = db.Column(db.String(120), index=True, unique=True)
-        password_hash = db.Column(db.String(128))
-        first_name = db.Column(db.String(64))
-        last_name = db.Column(db.String(64))
-        role = db.Column(db.String(20))
-        language = db.Column(db.String(10), default='en')
-        
-        def __repr__(self):
-            return f'<User {self.username}>'
-
-    class Label(db.Model):
-        __tablename__ = 'label'
-        
-        id = db.Column(db.Integer, primary_key=True)
-        key = db.Column(db.String(100), unique=True, nullable=False)
-        en = db.Column(db.Text)  # English
-        ar = db.Column(db.Text)  # Arabic
-        ru = db.Column(db.Text)  # Russian
-        zh = db.Column(db.Text)  # Chinese
-        es = db.Column(db.Text)  # Spanish
-        tg = db.Column(db.Text)  # Tajik
-        fa = db.Column(db.Text)  # Farsi/Persian
-        kk = db.Column(db.Text)  # Kazakh
-        az = db.Column(db.Text)  # Azerbaijani
-        
-        @classmethod
-        def get_label(cls, key, language='en'):
-            """Get label in the specified language"""
-            try:
-                label = cls.query.filter_by(key=key).first()
-                if label and hasattr(label, language) and getattr(label, language):
-                    return getattr(label, language)
-                # Fallback to English if no translation available
-                elif label and label.en:
-                    return label.en
-            except:
-                pass
-            # Return the key as last resort
-            return key
-        
-        def __repr__(self):
-            return f'<Label {self.key}>'
-
-# Language management functions
-def get_current_language():
-    """Get the current user's language preference"""
-    # First check if logged in user has a language preference
-    user_id = session.get('user_id')
-    if user_id:
-        try:
-            user = User.query.get(user_id)
-            if user and hasattr(user, 'language') and user.language:
-                return user.language
-        except Exception as e:
-            print(f"Error getting user language: {e}")
+# Define User model
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    first_name = db.Column(db.String(64))
+    last_name = db.Column(db.String(64))
+    role = db.Column(db.Integer, default=1)  # 1=bank user, 2=supervisor
     
-    # Fall back to session language if set
-    if 'language' in session:
-        return session['language']
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+        
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
     
-    # Default to English
-    return 'en'
+    @property
+    def is_authenticated(self):
+        return True
+        
+    @property
+    def is_supervisor(self):
+        return self.role >= 2
+    
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
 
-def get_label(key, language=None):
-    """Get label in the specified language"""
-    if language is None:
-        language = get_current_language()
-    return Label.get_label(key, language)
+# Create database tables
+with app.app_context():
+    db.create_all()
+
+# Helper function to get user by ID for templates
+@app.context_processor
+def utility_processor():
+    def get_user(user_id):
+        return User.query.get(user_id)
+    return dict(get_user=get_user)
 
 # Routes
-@app.route('/set_language/<language>')
-def set_language(language):
-    """Set the user's language preference"""
-    valid_languages = ['en', 'ar', 'ru', 'zh', 'es', 'tg', 'fa', 'kk', 'az']
-    
-    if language not in valid_languages:
-        language = 'en'
-    
-    # Store language preference in session
-    session['language'] = language
-    
-    # If user is logged in, update their preference in the database
-    user_id = session.get('user_id')
-    if user_id:
-        try:
-            user = User.query.get(user_id)
-            if user:
-                user.language = language
-                db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error updating user language: {e}")
-    
-    return redirect(request.referrer or url_for('index'))
+@app.route('/')
+def index():
+    return render_template('main/index.html', title='Cybersecurity Maturity Assessment')
 
-@app.route('/get_user')
-def get_user():
-    """Get current logged in user"""
-    user_id = session.get('user_id')
-    if user_id:
-        try:
-            user = User.query.get(user_id)
-            return user
-        except Exception as e:
-            print(f"Error getting user: {e}")
-            return None
-    return None
+@app.route('/about')
+def about():
+    return render_template('main/about.html', title='About')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -139,199 +73,140 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         
-        if user and check_password_hash(user.password_hash, password):
+        if user and user.check_password(password):
             session['user_id'] = user.id
-            # Set user's language preference in session
-            if user.language:
-                session['language'] = user.language
-            return redirect(url_for('index'))
-        else:
-            flash(get_label('invalid_credentials'), 'error')
+            flash('Login successful!', 'success')
             
-    return render_template('login.html')
+            # Redirect based on role
+            if user.is_supervisor:
+                return redirect(url_for('supervisor_dashboard'))
+            else:
+                return redirect(url_for('bank_dashboard'))
+        else:
+            flash('Invalid username or password', 'danger')
+    
+    # Use a template in the main directory instead of auth directory
+    return render_template('main/login.html', title='Login')
 
 @app.route('/logout')
 def logout():
-    session.clear()
-    return redirect(url_for('login'))
+    session.pop('user_id', None)
+    flash('You have been logged out', 'info')
+    return redirect(url_for('index'))
 
-@app.route('/')
-def index():
-    user = get_user()
-    if not user:
+@app.route('/bank/dashboard')
+def bank_dashboard():
+    if 'user_id' not in session:
+        flash('Please log in first', 'warning')
         return redirect(url_for('login'))
-    # Try both template locations
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.pop('user_id', None)
+        flash('User not found. Please log in again.', 'danger')
+        return redirect(url_for('login'))
+    
+    if user.is_supervisor:
+        return redirect(url_for('supervisor_dashboard'))
+    
+    return render_template('bank/dashboard.html', title='Bank Dashboard', user=user)
+
+@app.route('/supervisor/dashboard')
+def supervisor_dashboard():
+    if 'user_id' not in session:
+        flash('Please log in first', 'warning')
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.pop('user_id', None)
+        flash('User not found. Please log in again.', 'danger')
+        return redirect(url_for('login'))
+    
+    if not user.is_supervisor:
+        flash('Access denied. This area is for supervisors only.', 'danger')
+        return redirect(url_for('bank_dashboard'))
+    
+    return render_template('supervisor/dashboard.html', title='Supervisor Dashboard', user=user)
+
+# Create a basic admin user for testing
+@app.route('/setup')
+def setup():
     try:
-        return render_template('main/index.html', user=user)
-    except:
-        return render_template('index.html', user=user)
-
-# Admin routes for label management
-@app.route('/admin/labels')
-def admin_labels():
-    user = get_user()
-    if not user or user.role != 'admin':
-        flash(get_label('access_denied'), 'error')
-        return redirect(url_for('index'))
-    
-    labels = Label.query.all()
-    return render_template('admin/labels.html', labels=labels)
-
-@app.route('/admin/labels/add', methods=['GET', 'POST'])
-def admin_add_label():
-    user = get_user()
-    if not user or user.role != 'admin':
-        flash(get_label('access_denied'), 'error')
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        key = request.form.get('key')
-        
-        # Check if label key already exists
-        existing = Label.query.filter_by(key=key).first()
-        if existing:
-            flash(get_label('label_key_exists'), 'error')
-            return render_template('admin/edit_label.html')
-        
-        # Create new label with translations
-        label = Label(
-            key=key,
-            en=request.form.get('en'),
-            ar=request.form.get('ar'),
-            ru=request.form.get('ru'),
-            zh=request.form.get('zh'),
-            es=request.form.get('es'),
-            tg=request.form.get('tg'),
-            fa=request.form.get('fa'),
-            kk=request.form.get('kk'),
-            az=request.form.get('az')
-        )
-        
-        db.session.add(label)
-        db.session.commit()
-        flash(get_label('label_added_successfully'), 'success')
-        
-        return redirect(url_for('admin_labels'))
-    
-    return render_template('admin/edit_label.html')
-
-@app.route('/admin/labels/edit/<int:id>', methods=['GET', 'POST'])
-def admin_edit_label(id):
-    user = get_user()
-    if not user or user.role != 'admin':
-        flash(get_label('access_denied'), 'error')
-        return redirect(url_for('index'))
-    
-    label = Label.query.get_or_404(id)
-    
-    if request.method == 'POST':
-        # Update label translations
-        label.key = request.form.get('key')
-        label.en = request.form.get('en')
-        label.ar = request.form.get('ar')
-        label.ru = request.form.get('ru')
-        label.zh = request.form.get('zh')
-        label.es = request.form.get('es')
-        label.tg = request.form.get('tg')
-        label.fa = request.form.get('fa')
-        label.kk = request.form.get('kk')
-        label.az = request.form.get('az')
-        
-        db.session.commit()
-        flash(get_label('label_updated_successfully'), 'success')
-        return redirect(url_for('admin_labels'))
-    
-    return render_template('admin/edit_label.html', label=label)
-
-@app.route('/admin/labels/delete/<int:id>', methods=['POST'])
-def admin_delete_label(id):
-    user = get_user()
-    if not user or user.role != 'admin':
-        flash(get_label('access_denied'), 'error')
-        return redirect(url_for('index'))
-    
-    label = Label.query.get_or_404(id)
-    db.session.delete(label)
-    db.session.commit()
-    flash(get_label('label_deleted_successfully'), 'success')
-    
-    return redirect(url_for('admin_labels'))
-
-# Make helper functions available to templates
-@app.context_processor
-def inject_utilities():
-    return {
-        'get_current_language': get_current_language,
-        'get_label': get_label,
-        'get_user': get_user
-    }
-
-# Database initialization
-def init_database():
-    """Create database tables and populate initial data"""
-    with app.app_context():
-        db.create_all()
-        
-        # Add language column to existing users if it doesn't exist
-        try:
-            inspector = inspect(db.engine)
-            columns = [column['name'] for column in inspector.get_columns('user')]
-            if 'language' not in columns:
-                db.session.execute(text("ALTER TABLE user ADD COLUMN language VARCHAR(10) DEFAULT 'en'"))
-                db.session.commit()
-                print("Added language column to user table")
-        except Exception as e:
-            print(f"Error adding language column: {e}")
-        
-        # Add initial labels if none exist
-        if Label.query.count() == 0:
-            initial_labels = [
-                {'key': 'app_title', 'en': 'Cybersecurity Maturity Assessment', 'ar': 'تقييم نضج الأمن السيبراني'},
-                {'key': 'login', 'en': 'Login', 'ar': 'تسجيل الدخول'},
-                {'key': 'username', 'en': 'Username', 'ar': 'اسم المستخدم'},
-                {'key': 'password', 'en': 'Password', 'ar': 'كلمة المرور'},
-                {'key': 'submit', 'en': 'Submit', 'ar': 'إرسال'},
-                {'key': 'cancel', 'en': 'Cancel', 'ar': 'إلغاء'},
-                {'key': 'welcome', 'en': 'Welcome', 'ar': 'مرحباً'},
-                {'key': 'logout', 'en': 'Logout', 'ar': 'تسجيل الخروج'},
-                {'key': 'dashboard', 'en': 'Dashboard', 'ar': 'لوحة التحكم'},
-                {'key': 'admin', 'en': 'Admin', 'ar': 'الإدارة'},
-                {'key': 'manage_labels', 'en': 'Manage Labels', 'ar': 'إدارة التسميات'},
-                {'key': 'add_new_label', 'en': 'Add New Label', 'ar': 'إضافة تسمية جديدة'},
-                {'key': 'edit_label', 'en': 'Edit Label', 'ar': 'تعديل التسمية'},
-                {'key': 'delete_label', 'en': 'Delete Label', 'ar': 'حذف التسمية'},
-                {'key': 'save', 'en': 'Save', 'ar': 'حفظ'},
-                {'key': 'back', 'en': 'Back', 'ar': 'رجوع'},
-                {'key': 'key', 'en': 'Key', 'ar': 'المفتاح'},
-                {'key': 'english', 'en': 'English', 'ar': 'الإنجليزية'},
-                {'key': 'arabic', 'en': 'Arabic', 'ar': 'العربية'},
-                {'key': 'russian', 'en': 'Russian', 'ar': 'الروسية'},
-                {'key': 'chinese', 'en': 'Chinese', 'ar': 'الصينية'},
-                {'key': 'spanish', 'en': 'Spanish', 'ar': 'الإسبانية'},
-                {'key': 'tajik', 'en': 'Tajik', 'ar': 'التاجيكية'},
-                {'key': 'farsi', 'en': 'Farsi', 'ar': 'الفارسية'},
-                {'key': 'kazakh', 'en': 'Kazakh', 'ar': 'الكازاخية'},
-                {'key': 'azerbaijani', 'en': 'Azerbaijani', 'ar': 'الأذربيجانية'},
-                {'key': 'actions', 'en': 'Actions', 'ar': 'الإجراءات'},
-                {'key': 'edit', 'en': 'Edit', 'ar': 'تعديل'},
-                {'key': 'delete', 'en': 'Delete', 'ar': 'حذف'},
-                {'key': 'confirm_delete', 'en': 'Are you sure you want to delete this label?', 'ar': 'هل أنت متأكد من حذف هذه التسمية؟'},
-                {'key': 'access_denied', 'en': 'Access denied', 'ar': 'تم رفض الوصول'},
-                {'key': 'invalid_credentials', 'en': 'Invalid username or password', 'ar': 'اسم المستخدم أو كلمة المرور غير صحيحة'},
-                {'key': 'label_key_exists', 'en': 'Label key already exists', 'ar': 'مفتاح التسمية موجود بالفعل'},
-                {'key': 'label_added_successfully', 'en': 'Label added successfully', 'ar': 'تم إضافة التسمية بنجاح'},
-                {'key': 'label_updated_successfully', 'en': 'Label updated successfully', 'ar': 'تم تحديث التسمية بنجاح'},
-                {'key': 'label_deleted_successfully', 'en': 'Label deleted successfully', 'ar': 'تم حذف التسمية بنجاح'},
-            ]
+        if User.query.count() == 0:
+            # Create admin user
+            admin = User(username='admin', email='admin@example.com', first_name='Admin', last_name='User', role=2)
+            admin.set_password('password')
             
-            for label_data in initial_labels:
-                label = Label(**label_data)
-                db.session.add(label)
+            # Create bank user
+            bank_user = User(username='bank', email='bank@example.com', first_name='Bank', last_name='User', role=1)
+            bank_user.set_password('password')
             
+            db.session.add(admin)
+            db.session.add(bank_user)
             db.session.commit()
-            print("Added initial labels")
+            
+            return 'Users created successfully! <a href="/login">Login here</a>'
+        
+        return 'Setup already completed. <a href="/login">Login here</a>'
+    except Exception as e:
+        return f'Error during setup: {str(e)}'
 
+# Helper function to check if templates exist
+@app.route('/check-templates')
+def check_templates():
+    template_paths = [
+        'base.html',
+        'main/index.html',
+        'main/about.html',
+        'main/login.html',
+        'bank/dashboard.html',
+        'supervisor/dashboard.html'
+    ]
+    
+    results = {}
+    for path in template_paths:
+        try:
+            app.jinja_env.get_template(path)
+            results[path] = "Found"
+        except Exception as e:
+            results[path] = f"Not found: {str(e)}"
+    
+    return str(results)
+
+# Debug helper function to check template paths
+@app.route('/debug-templates')
+def debug_templates():
+    import os
+    template_dir = app.template_folder
+    result = {
+        'template_folder': template_dir,
+        'exists': os.path.exists(template_dir),
+        'files': {}
+    }
+    
+    # Check direct paths
+    paths_to_check = [
+        os.path.join(template_dir, 'base.html'),
+        os.path.join(template_dir, 'main', 'index.html'),
+        os.path.join(template_dir, 'main', 'about.html'),
+        os.path.join(template_dir, 'main', 'login.html'),
+        os.path.join(template_dir, 'bank', 'dashboard.html'),
+        os.path.join(template_dir, 'supervisor', 'dashboard.html')
+    ]
+    
+    for path in paths_to_check:
+        result['files'][path] = os.path.exists(path)
+    
+    # Directory listings
+    for root, dirs, files in os.walk(template_dir):
+        rel_path = os.path.relpath(root, template_dir)
+        if rel_path == '.':
+            rel_path = 'ROOT'
+        result[f'dir:{rel_path}'] = files
+    
+    return str(result)
+
+# Run the app
 if __name__ == '__main__':
-    # Initialize database when running the app
-    init_database()
     app.run(debug=True)
